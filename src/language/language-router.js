@@ -3,6 +3,7 @@ const LanguageService = require('./language-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
 const languageRouter = express.Router()
+const bodyParser = express.json()
 
 languageRouter
   .use(requireAuth)
@@ -63,9 +64,70 @@ languageRouter
   })
 
 languageRouter
-  .post('/guess', async (req, res, next) => {
-    // implement me
-    res.send('implement me!')
+  .post('/guess', bodyParser, async (req, res, next) => {
+    const { guess } = req.body;
+    //make everything lowercase??
+    //const normalizedGuess = guess.toLowercase();
+
+    try {
+      if(!req.body.guess) {
+        res.status(400).json({ error : `Missing 'guess' in request body`})
+        return;
+      }
+      const words = await LanguageService.getLanguageWords(
+        req.app.get('db'),
+        req.language.id
+      )
+      const language = await LanguageService.getUsersLanguage(
+        req.app.get('db'),
+        req.user.id
+      )
+      const list = LanguageService.createLinkedList(words, language.head, language.total_score)
+
+      let isCorrect;
+      let currentNode = list.head;
+
+      let prevAnswer = currentNode.value.translation;
+
+      if(guess === prevAnswer) {
+        isCorrect = true;
+        currentNode.value.memory_value = parseInt(currentNode.value.memory_value * 2, 10)
+        currentNode.value.correct_count = parseInt(currentNode.value.correct_count + 1, 10)
+        language.total_score = language.total_score + 1
+      } else {
+        isCorrect = false;
+        currentNode.value.incorrect_count = currentNode.value.incorrect_count + 1;
+        currentNode.value.memory_value = 1
+      }
+
+      list.shiftHeadBy(list.head.value.memory_value)
+
+      const lang = {
+        head : list.head.value.id,
+        total_score : language.total_score
+      }
+
+      await Promise.all([LanguageService.postUserLanguage (
+        req.app.get('db'),
+        currentNode.value.language_id,
+        lang
+      ), ...LanguageService.postUserwords(
+        req.app.get('db'),
+        list
+      )])
+
+      res.json({
+        nextWord : list.head.value.original,
+        wordCorrectCount : list.head.value.correct_count,
+        wordIncorrectCount : list.head.value.incorrect_count,
+        totalScore : language.total_score,
+        answer: prevAnswer,
+        isCorrect : isCorrect
+      })
+
+    } catch(error) {
+      next(error)
+    }
   })
 
 module.exports = languageRouter
