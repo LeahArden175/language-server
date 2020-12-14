@@ -66,8 +66,6 @@ languageRouter
 languageRouter
   .post('/guess', bodyParser, async (req, res, next) => {
     const { guess } = req.body;
-    //make everything lowercase??
-    //const normalizedGuess = guess.toLowercase();
 
     try {
       if(!req.body.guess) {
@@ -91,8 +89,8 @@ languageRouter
 
       if(guess === prevAnswer) {
         isCorrect = true;
-        currentNode.value.memory_value = parseInt(currentNode.value.memory_value * 2, 10)
-        currentNode.value.correct_count = parseInt(currentNode.value.correct_count + 1, 10)
+        currentNode.value.memory_value = parseInt(currentNode.value.memory_value * 2)
+        currentNode.value.correct_count = parseInt(currentNode.value.correct_count + 1)
         language.total_score = language.total_score + 1
       } else {
         isCorrect = false;
