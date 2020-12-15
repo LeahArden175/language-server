@@ -91,7 +91,6 @@ languageRouter
         isCorrect = true;
         currentNode.value.memory_value = parseInt(currentNode.value.memory_value * 2)
         currentNode.value.correct_count = parseInt(currentNode.value.correct_count + 1)
-        console.log(currentNode.value.correct_count)
         language.total_score = language.total_score + 1
       } else {
         isCorrect = false;
@@ -100,13 +99,11 @@ languageRouter
       }
 
       list.shiftHeadBy(currentNode.value.memory_value)
-      console.log(currentNode.value)
 
       const lang = {
         head : list.head.value.id,
         total_score : language.total_score
       }
-      console.log('lang', lang)
 
       await Promise.all([LanguageService.postUserLanguage (
         req.app.get('db'),
