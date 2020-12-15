@@ -39,7 +39,7 @@ const LanguageService = {
       .where({language_id})
   },
   createLinkedList(words, head, total_score) {
-    const ll = new NewLinkedList(words[0].language_id, 'Javascript', total_score)
+    const ll = new NewLinkedList(words[0].language_id, head, total_score)
     let word = words.find(item => item.id === head)
     ll.insertHead(word);
 
